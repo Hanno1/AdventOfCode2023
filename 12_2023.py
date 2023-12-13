@@ -7,11 +7,16 @@ def preprocess(data):
         mat.append((split[0], [int(e) for e in split[1].split(',')]))
     return mat
 
-def check_line(line, broken_springs):
+def check_line(line, broken_springs, springs_count):
     broken_index = 0
     hash_counter = 0
+    if line.count('#') > springs_count:
+        return False
+    counter = 0
     for el in line:
         if el == '?':
+            rest_length = len(line) - counter
+            rest_springs = sum(broken_springs[broken_index:])
             return True
         if el == '.':
             if hash_counter > 0:
@@ -29,6 +34,7 @@ def check_line(line, broken_springs):
                 return False
             if hash_counter > broken_springs[broken_index]:
                 return False
+        counter += 1
     if hash_counter > 0:
         if broken_index == len(broken_springs):
             return False
@@ -49,9 +55,6 @@ def fill_springs(line, broken_springs):
         if line[i] == '?':
             new_line_1 = line[:i] + '.' + line[i+1:]
             new_line_2 = line[:i] + '#' + line[i+1:]
-
-            # print(new_line_1, check_line(new_line_1, broken_springs))
-            # print(new_line_2, check_line(new_line_2, broken_springs))
             # check if line possible
             if check_line(new_line_1, broken_springs):
                 pos += fill_springs(new_line_1, broken_springs)
