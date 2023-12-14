@@ -80,17 +80,41 @@ def first_task():
     # line = ('?###????????', [3, 2, 1])
     # print(fill_springs(line[0], line[1]))
 
-def unfold(line):
+def unfold_springs(line):
     springs = line[0]
     new_springs = ''
     numbers = line[1]
-    new_numbers = []
     for _ in range(5):
         new_springs += springs + '?'
-        new_numbers += numbers
     new_springs = new_springs[:-1]
-    return (new_springs, new_numbers)
+    return (new_springs, numbers)
 
+def unfold_numbers(line):
+    springs = line[0]
+    numbers = line[1]
+    new_numbers = []
+    for _ in range(5):
+        new_numbers += numbers
+    return (springs, new_numbers)
+
+def fit(unique_el, springs):
+    # try fitting springs into the unique_el
+    # original spring and not folded
+    def fill_spring(current_spring):
+        pos = []
+        if current_spring.count('?') == 0:
+            return [current_spring]
+        current_spring_1 = current_spring.replace('?', '#', 1)
+        f1 = fill_spring(current_spring_1)
+        if f1 != []:
+            pos += f1
+        current_spring_2 = current_spring.replace('?', '.', 1)
+        f2 = fill_spring(current_spring_2)
+        if f2 != []:
+            pos += f2
+        return pos
+    possibilities = fill_spring(unique_el)
+    print(unique_el, possibilities)
 
 def second_task():
     data = hc.read_file_line('12_2023')
@@ -99,17 +123,16 @@ def second_task():
     # unfold paper
     new_mat = []
     for line in mat:
-        new_mat.append(unfold(line))
+        new_mat.append(unfold_springs(line))
     mat = new_mat
-    sum_ = 0
-    counter = 0
-    for line in mat:
-        print(f'starting line {counter + 1}')
-        res = fill_springs(line[0], line[1])
-        # print(f'current line {line}, result: {res}')
-        sum_ += res
-        counter += 1
-    print(sum_)
+
+    line = mat[1]
+    print(line)
+    splited_line = line[0].split('.')
+    splited_line = [e for e in splited_line if e != '']
+    unique_els = set(splited_line)
+    for unique_el in unique_els:
+        fit(unique_el, line[1])
 
 # first_task()
 second_task()
