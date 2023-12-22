@@ -1,13 +1,14 @@
 import helperfunctions as hc
+import math
 
 def preprocess(data):
     mat = []
     for line in data:
         split = line.split(' ')
-        mat.append((split[0], [int(e) for e in split[1].split(',')]))
+        mat.append([split[0], [int(e) for e in split[1].split(',')]])
     return mat
 
-def check_line(line, broken_springs, springs_count):
+def check_line(line, broken_springs, springs_count = math.inf):
     broken_index = 0
     hash_counter = 0
     if line.count('#') > springs_count:
@@ -97,42 +98,66 @@ def unfold_numbers(line):
         new_numbers += numbers
     return (springs, new_numbers)
 
-def fit(unique_el, springs):
-    # try fitting springs into the unique_el
-    # original spring and not folded
-    def fill_spring(current_spring):
-        pos = []
-        if current_spring.count('?') == 0:
-            return [current_spring]
-        current_spring_1 = current_spring.replace('?', '#', 1)
-        f1 = fill_spring(current_spring_1)
-        if f1 != []:
-            pos += f1
-        current_spring_2 = current_spring.replace('?', '.', 1)
-        f2 = fill_spring(current_spring_2)
-        if f2 != []:
-            pos += f2
-        return pos
-    possibilities = fill_spring(unique_el)
-    print(unique_el, possibilities)
+def unfold_line(line):
+    new_springs = unfold_springs(line)
+    new_numbers = unfold_numbers(line)
+    return (new_springs, new_numbers)
+
+def fit_springs(springs, numbers):
+    if len(springs) < len(numbers) + sum(numbers) - 1:
+        return 0
+    possibilities = 0
+    if len(numbers) == 0:
+        # just fit only points
+        if springs.count('#') == 0:
+            return 1
+        return 0
+    next_spring = springs[0]
+    next_number = numbers[0]
+    # we have a question mark a # or a . in front of us
+    if next_spring == '.':
+        # go to next ? or #
+        next_index = min(springs.index('#'), springs.index('?'))
+        possibilities += fit_springs(springs[next_index:], numbers)
+    elif next_spring == '#':
+        # check if we can fit the next number
+        part_string = springs[:next_number]
+        if '.' in part_string:
+            return 0
+        if len(springs) == next_number:
+            if len(numbers) == 1:
+                return 1
+            return 0
+        possibilities += fill_springs(springs[next_number + 1:], numbers[1:])
+    else:
+        # question mark
+        # either . or #
+        # case of a point
+        possibilities += fill_springs(springs[1:], numbers)
+        springs = springs.replace('?', '#', 1)
+        possibilities += fill_springs(springs, numbers)
+    return possibilities
+
+def solve_line(line):
+    springs = line[0]
+    numbers = line[1]
+
+    pos = fit_springs(springs[0], numbers[1])
+    print(f'Result of the line is {pos}')
+    return pos
 
 def second_task():
-    data = hc.read_file_line('12_2023')
-    mat = preprocess(data)
-
-    # unfold paper
-    new_mat = []
-    for line in mat:
-        new_mat.append(unfold_springs(line))
-    mat = new_mat
-
-    line = mat[1]
-    print(line)
-    splited_line = line[0].split('.')
-    splited_line = [e for e in splited_line if e != '']
-    unique_els = set(splited_line)
-    for unique_el in unique_els:
-        fit(unique_el, line[1])
+    data = preprocess(hc.read_file_line('12_2023'))
+    unfold_lines = []
+    for line in data:
+        unfold_lines.append(unfold_line(line))
+    sum_ = 0
+    counter = 0
+    for line in unfold_lines:
+        print(f'Starting line {counter}')
+        sum_ += solve_line(line)
+        counter += 1
+    print(sum_)
 
 # first_task()
 second_task()
